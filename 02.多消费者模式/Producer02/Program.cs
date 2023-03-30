@@ -6,37 +6,13 @@ using System.Text;
 //队列名称
 const string QueueName = "job";
 
-while (true)
-{
-    Console.Write("添加几个耗时任务到消息队列：");
-    var inputLine = Console.ReadLine();
-
-    if (string.IsNullOrEmpty(inputLine))
-    {
-        Console.WriteLine("请输入一个整数！");
-    }
-    else if(int.TryParse(inputLine, out int jobCount))
-    {
-        if (jobCount <= 0)
-        {
-            Console.WriteLine("请输入一个有效的整数！");
-        }
-        else
-        {
-            AddJob(jobCount);
-            Console.WriteLine($"自动添加 {jobCount} 个耗时任务到消息队列！");
-        }
-    }
-    else
-    {
-        Console.WriteLine("请输入一个有效的整数！");
-    }
-}
+//开始
+Start();
 
 /// <summary>
-/// 添加任务
+/// 执行开始
 /// </summary>
-static void AddJob(int jobCount)
+static void Start()
 {
     //连接通道构建
     var factory = new ConnectionFactory { HostName = "localhost", UserName = "admin", Password = "123456" };
@@ -45,11 +21,48 @@ static void AddJob(int jobCount)
 
     //申明队列
     channel.QueueDeclare(QueueName,
-             durable: false,
+             durable: true,
              exclusive: false,
              autoDelete: false,
              arguments: null);
 
+    //消息持久化
+    var properties = channel.CreateBasicProperties();
+    properties.Persistent = true;
+
+    while (true)
+    {
+        Console.Write("添加几个耗时任务到消息队列：");
+        var inputLine = Console.ReadLine();
+
+        if (string.IsNullOrEmpty(inputLine))
+        {
+            Console.WriteLine("请输入一个整数！");
+        }
+        else if (int.TryParse(inputLine, out int jobCount))
+        {
+            if (jobCount <= 0)
+            {
+                Console.WriteLine("请输入一个有效的整数！");
+            }
+            else
+            {
+                AddJob(channel, jobCount);
+                Console.WriteLine($"自动添加 {jobCount} 个耗时任务到消息队列！");
+            }
+        }
+        else
+        {
+            Console.WriteLine("请输入一个有效的整数！");
+        }
+    }
+}
+
+/// <summary>
+/// 添加任务
+/// </summary>
+static void AddJob(IModel channel, int jobCount)
+{
     //循环添加
     for (var index = 0; index < jobCount; index ++)
     {

@@ -15,10 +15,13 @@ using var channel = connection.CreateModel();
 
 //申明队列
 channel.QueueDeclare(QueueName,
-         durable: false,
+         durable: true,
          exclusive: false,
          autoDelete: false,
          arguments: null);
+
+//一次分配的消息数量
+channel.BasicQos(prefetchSize: 0, prefetchCount: 1, global: false);
 
 //进程ID
 var processId = Process.GetCurrentProcess().Id;
